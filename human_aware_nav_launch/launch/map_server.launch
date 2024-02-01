@@ -1,0 +1,5 @@
+<launch>
+  
+  <node name="map_server" pkg="map_server" type="map_server" args="$(find human_aware_nav_launch)/maps/map_file.yaml"/>
+ 
+</launch>

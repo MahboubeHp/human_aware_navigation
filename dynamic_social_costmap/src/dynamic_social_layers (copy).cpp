@@ -55,9 +55,6 @@ void SocialLayers::initialize(costmap_2d::Costmap2DROS* static_map,
   frame_id_ = static_map->getGlobalFrameID();
   time_resolution_ = time_resolution;
 
-  //initialize mob_id_
-  mob_id_ = 1; // Set an initial value, assuming 1 indicates pedestrian by default
-
   //initialize publishers and subscribers
   people_sub_ = nh_.subscribe("/people_prediction", 1, &SocialLayers::peopleCallback, this);
 
@@ -192,7 +189,7 @@ void SocialLayers::update()
               //if position is in the map, mark it in the map (put Gaussian cost
               //values around position
               markHumanInCostmap(person_in_map_x, person_in_map_y,
-                                 person_in_map_angle, timed_map, person_k);
+                                 person_in_map_angle, timed_map);
             }
 
             //enlarge time inkrement for next interpolation step
@@ -311,9 +308,6 @@ void SocialLayers::saveTimedCostmaps(std::string path)
 void SocialLayers::reconfigureCB(dynamic_social_costmap::SocialCostmapConfig &config,
                                  uint32_t level)
 {
-
-  people_msgs::Person person_k; // Add this line to declare person_k in the scope of the function
-
   //update configuration
   amplitude_ = config.amplitude_multiplicator;
   cutoff_amplitude_ = config.cutoff_amplitude;
@@ -326,13 +320,12 @@ void SocialLayers::reconfigureCB(dynamic_social_costmap::SocialCostmapConfig &co
   variance_time_factor_ = config.variance_time_factor;
   forbidden_radius_time_factor_ = config.forbidden_radius_time_factor;
 
-
   special_mob_id_amplitude_ = config.special_mob_id_amplitude;
 
   int interpolation_steps = config.interpolation_steps;
   interpolation_time_step_ = ros::Duration(time_resolution_.toSec() / (interpolation_steps + 1));
 
-   //visualize the new configuration
+  //visualize the new configuration
   if (timed_costmap_.size() > 0)
   {
     lattice_planner::TimedCostmap* timed_costmap =
@@ -343,7 +336,7 @@ void SocialLayers::reconfigureCB(dynamic_social_costmap::SocialCostmapConfig &co
     {
       //mark the resulting cost function at different positions inside the cost map
       markHumanInCostmap(timed_costmap->size_x / 8 + (i * 1.0 / timed_costmap->resolution),
-                         timed_costmap->size_y / 2, M_PI_4, timed_costmap, person_k);
+                         timed_costmap->size_y / 2, M_PI_4, timed_costmap);
     }
 
     //publish the marked costmap for visualization
@@ -358,7 +351,6 @@ void SocialLayers::peopleCallback(const people_msgs::PeoplePredictionConstPtr pe
 {
   ROS_DEBUG("dynamic costmap: received people callback");
   predicted_people_ = *people;
-
 }
 
 double SocialLayers::calcGaussian(double pos_x, double pos_y, double origin_x,
@@ -424,24 +416,8 @@ bool SocialLayers::getCostmapCoordinates(geometry_msgs::PoseStamped* pose,
 }
 
 void SocialLayers::markHumanInCostmap(int human_in_costmap_x, int human_in_costmap_y,
-                                      double angle, lattice_planner::TimedCostmap *costmap,
-                                      const people_msgs::Person& person_k)
+                                      double angle, lattice_planner::TimedCostmap *costmap)
 {
-
-  // Calculate variance based on mob_id (adjust this formula based on the requirements)
-  //double adjusted_variance_x = variance_x_ + 0.9 -(1 / mob_id_);
-  //double adjusted_variance_y = variance_y_ + 0.9 -(1 / mob_id_);
-  //double adjusted_forbidden_radius = forbidden_radius_ * mob_id * special_mob_id_amplitude_;
-
-
-//double adjusted_variance_x = special_mob_id_amplitude_ * mob_id_;
-//double adjusted_variance_y = special_mob_id_amplitude_ * mob_id_;
-
-  double adjusted_variance_x = special_mob_id_amplitude_ * person_k.mob_id;
-  double adjusted_variance_y = special_mob_id_amplitude_ * person_k.mob_id;
-
-
-  
   //calculate the Gaussian params for the time index of the cost map layer
   double amplitude =
       (1 + costmap->time_index * amplitude_time_factor_) * amplitude_;
@@ -454,14 +430,36 @@ void SocialLayers::markHumanInCostmap(int human_in_costmap_x, int human_in_costm
   double lethal_radius =
       (1 + costmap->time_index * forbidden_radius_time_factor_) * forbidden_radius_;
 
-  //clamp the values
+
+  // Iterate through people in the 'people' message
+  for (const auto& person : predicted_people_.predicted_people)
+  {
+    for (const auto& individual : person.people)
+    {
+   
+      if (individual.name == "person2")
+      {
+        mob_id = individual.mob_id;
+        break;
+      }
+         // Calculate Gaussian around human using mob_id
+  if (mob_id == 2.0) {
+    amplitude = 1.5 * special_mob_id_amplitude_;
+  }
+    }
+  }
+
+    // Calculate Gaussian around human using mob_id
+  if (mob_id == 2.0) {
+    amplitude = 1.5 * special_mob_id_amplitude_;
+  }
+
   amplitude = amplitude > 0.0 ? amplitude : 0.0;
   amplitude = amplitude < (double) costmap_2d::LETHAL_OBSTACLE ? amplitude : (double) costmap_2d::LETHAL_OBSTACLE;
   cutoff_amplitude = cutoff_amplitude > 0.0 ? cutoff_amplitude : 0.0;
   variance_x = variance_x > 0.0 ? variance_x : 0.0;
   variance_y = variance_y > 0.0 ? variance_y : 0.0;
   lethal_radius = lethal_radius > 0.0 ? lethal_radius : 0.0;
-
 
   //calculate gaussian around human
   if(amplitude > 0)
@@ -509,18 +507,10 @@ void SocialLayers::markHumanInCostmap(int human_in_costmap_x, int human_in_costm
         //calculate Gaussian value of cell
         else
         {
-          /*double gauss_ampl = calcGaussian(i*resolution, j*resolution,
+          double gauss_ampl = calcGaussian(i*resolution, j*resolution,
                                            origin_ix*resolution,
                                            origin_iy*resolution,
                                            amplitude, variance_x, variance_y, angle);
-*/
-
-                                             // calculate Gaussian around human using adjusted variances
-          double gauss_ampl = calcGaussian(i * resolution, j * resolution,
-                                   origin_ix * resolution,
-                                   origin_iy * resolution,
-                                   amplitude, adjusted_variance_x, adjusted_variance_y, angle);
-
 
           cost = (unsigned char) gauss_ampl;
 

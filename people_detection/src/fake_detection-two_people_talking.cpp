@@ -42,7 +42,7 @@ int main(int argc, char **argv)
   priv_n.param("vel1", vel1, 0.0);
 
   priv_n.param("x2", x2, 4.84);
-  priv_n.param("y2", y2, -4.7);
+  priv_n.param("y2", y2, -1.1);
   priv_n.param("phi2", phi2, M_PI); // Set orientation to face the opposite direction
   priv_n.param("vel2", vel2, 0.0);
 
@@ -70,8 +70,7 @@ int main(int argc, char **argv)
     person1.velocity.y = vel1 * sin(phi1);
     person1.position.x = x1 + delta_t * person1.velocity.x;
     person1.position.y = y1 + delta_t * person1.velocity.y;
-    person1.name = "pedestrian";
-    person1.mob_id = 2.0;
+    person1.name = "person1";
 
     people_marker1.pose.position.x = person1.position.x;
     people_marker1.pose.position.y = person1.position.y;
@@ -86,8 +85,7 @@ int main(int argc, char **argv)
     person2.velocity.y = vel2 * sin(phi2);
     person2.position.x = x2 + delta_t * person2.velocity.x;
     person2.position.y = y2 + delta_t * person2.velocity.y;
-    person2.name = "wheelchair_user";
-    person2.mob_id = 4.0;
+    person2.name = "person2";
 
     people_marker2.pose.position.x = person2.position.x;
     people_marker2.pose.position.y = person2.position.y;

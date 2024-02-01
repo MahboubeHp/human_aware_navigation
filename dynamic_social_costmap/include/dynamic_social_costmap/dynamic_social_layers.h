@@ -48,6 +48,8 @@
 #include <people_msgs/People.h>
 #include <people_msgs/PersonStamped.h>
 #include <people_msgs/PeoplePrediction.h>
+#include <people_msgs/Person.h>
+#include <string>  // Add this include for using std::string
 
 #include <dynamic_reconfigure/server.h>
 #include <dynamic_social_costmap/SocialCostmapConfig.h>
@@ -67,6 +69,13 @@ namespace dynamic_social_costmap
  */
 class SocialLayers : public lattice_planner::DynamicLayers
 {
+
+ private:
+    double mob_id_;
+    double special_mob_id_amplitude_;
+
+
+
 public:
 
   /**
@@ -131,6 +140,17 @@ public:
    * @param path path to folder
    */
   void saveTimedCostmaps(std::string path);
+
+
+
+  
+private:
+        std::string personName_; 
+
+
+void setPersonName(const std::string& name) {
+    personName_ = name;
+  }
 
 protected:
 
@@ -199,8 +219,8 @@ protected:
    * @param angle angle of human in map
    * @param costmap costmap to update
    */
-  void markHumanInCostmap(int human_in_costmap_x, int human_in_costmap_y, double angle,
-                          lattice_planner::TimedCostmap *costmap);
+  void markHumanInCostmap(int human_in_costmap_x, int human_in_costmap_y, double angle, lattice_planner::TimedCostmap *costmap, const people_msgs::Person& person_k);
+
 
   std::vector<lattice_planner::TimedCostmap*> timed_costmap_; ///< the actual costmap layers
   people_msgs::PeoplePrediction predicted_people_; ///< container for predicted human trajectories
