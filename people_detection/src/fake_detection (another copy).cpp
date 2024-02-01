@@ -70,8 +70,8 @@ int main(int argc, char **argv)
     person1.velocity.y = vel1 * sin(phi1);
     person1.position.x = x1 + delta_t * person1.velocity.x;
     person1.position.y = y1 + delta_t * person1.velocity.y;
-    person1.name = "pedestrian";
-    person1.mob_id = 2.0;
+    person1.name = "person1";
+    person1.mob_id = 1.0;
 
     people_marker1.pose.position.x = person1.position.x;
     people_marker1.pose.position.y = person1.position.y;
@@ -86,8 +86,8 @@ int main(int argc, char **argv)
     person2.velocity.y = vel2 * sin(phi2);
     person2.position.x = x2 + delta_t * person2.velocity.x;
     person2.position.y = y2 + delta_t * person2.velocity.y;
-    person2.name = "wheelchair_user";
-    person2.mob_id = 4.0;
+    person2.name = "person2";
+    person2.mob_id = 2.0;
 
     people_marker2.pose.position.x = person2.position.x;
     people_marker2.pose.position.y = person2.position.y;
