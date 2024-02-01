@@ -56,7 +56,12 @@ void SocialLayers::initialize(costmap_2d::Costmap2DROS* static_map,
   time_resolution_ = time_resolution;
 
   //initialize mob_id_
-  mob_id_ = 1; // Set an initial value, assuming 1 indicates pedestrian by default
+  mob_id_ = 1; // Set an initial value, assuming 0 is a valid value
+  if (!predicted_people_.predicted_people.empty() && !predicted_people_.predicted_people[0].people.empty())
+  {
+    mob_id_ = predicted_people_.predicted_people[0].people[0].mob_id;
+  }
+
 
   //initialize publishers and subscribers
   people_sub_ = nh_.subscribe("/people_prediction", 1, &SocialLayers::peopleCallback, this);
@@ -332,7 +337,15 @@ void SocialLayers::reconfigureCB(dynamic_social_costmap::SocialCostmapConfig &co
   int interpolation_steps = config.interpolation_steps;
   interpolation_time_step_ = ros::Duration(time_resolution_.toSec() / (interpolation_steps + 1));
 
-   //visualize the new configuration
+  //update mob_id_
+    if (!predicted_people_.predicted_people.empty() && !predicted_people_.predicted_people[0].people.empty())
+{
+  mob_id_ = predicted_people_.predicted_people[0].people[0].mob_id;
+}
+
+
+
+  //visualize the new configuration
   if (timed_costmap_.size() > 0)
   {
     lattice_planner::TimedCostmap* timed_costmap =
@@ -359,6 +372,12 @@ void SocialLayers::peopleCallback(const people_msgs::PeoplePredictionConstPtr pe
   ROS_DEBUG("dynamic costmap: received people callback");
   predicted_people_ = *people;
 
+   // Add debug prints to check mob_id in received people messages
+  if (!predicted_people_.predicted_people.empty() && !predicted_people_.predicted_people[0].people.empty())
+  {
+    mob_id_ = predicted_people_.predicted_people[0].people[0].mob_id;
+    ROS_INFO("Received mob_id: %f", mob_id_);
+  }
 }
 
 double SocialLayers::calcGaussian(double pos_x, double pos_y, double origin_x,
@@ -432,14 +451,8 @@ void SocialLayers::markHumanInCostmap(int human_in_costmap_x, int human_in_costm
   //double adjusted_variance_x = variance_x_ + 0.9 -(1 / mob_id_);
   //double adjusted_variance_y = variance_y_ + 0.9 -(1 / mob_id_);
   //double adjusted_forbidden_radius = forbidden_radius_ * mob_id * special_mob_id_amplitude_;
-
-
-//double adjusted_variance_x = special_mob_id_amplitude_ * mob_id_;
-//double adjusted_variance_y = special_mob_id_amplitude_ * mob_id_;
-
-  double adjusted_variance_x = special_mob_id_amplitude_ * person_k.mob_id;
-  double adjusted_variance_y = special_mob_id_amplitude_ * person_k.mob_id;
-
+double adjusted_variance_x = special_mob_id_amplitude_ * mob_id_;
+double adjusted_variance_y = special_mob_id_amplitude_ * mob_id_;
 
   
   //calculate the Gaussian params for the time index of the cost map layer
@@ -461,6 +474,11 @@ void SocialLayers::markHumanInCostmap(int human_in_costmap_x, int human_in_costm
   variance_x = variance_x > 0.0 ? variance_x : 0.0;
   variance_y = variance_y > 0.0 ? variance_y : 0.0;
   lethal_radius = lethal_radius > 0.0 ? lethal_radius : 0.0;
+
+
+
+
+
 
 
   //calculate gaussian around human

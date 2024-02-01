@@ -55,9 +55,6 @@ void SocialLayers::initialize(costmap_2d::Costmap2DROS* static_map,
   frame_id_ = static_map->getGlobalFrameID();
   time_resolution_ = time_resolution;
 
-  //initialize mob_id_
-  mob_id_ = 1; // Set an initial value, assuming 1 indicates pedestrian by default
-
   //initialize publishers and subscribers
   people_sub_ = nh_.subscribe("/people_prediction", 1, &SocialLayers::peopleCallback, this);
 
@@ -192,7 +189,9 @@ void SocialLayers::update()
               //if position is in the map, mark it in the map (put Gaussian cost
               //values around position
               markHumanInCostmap(person_in_map_x, person_in_map_y,
-                                 person_in_map_angle, timed_map, person_k);
+                                 person_in_map_angle, timed_map);
+                                  // Update the person name here
+            setPersonName(person_k.name);
             }
 
             //enlarge time inkrement for next interpolation step
@@ -311,9 +310,6 @@ void SocialLayers::saveTimedCostmaps(std::string path)
 void SocialLayers::reconfigureCB(dynamic_social_costmap::SocialCostmapConfig &config,
                                  uint32_t level)
 {
-
-  people_msgs::Person person_k; // Add this line to declare person_k in the scope of the function
-
   //update configuration
   amplitude_ = config.amplitude_multiplicator;
   cutoff_amplitude_ = config.cutoff_amplitude;
@@ -326,13 +322,10 @@ void SocialLayers::reconfigureCB(dynamic_social_costmap::SocialCostmapConfig &co
   variance_time_factor_ = config.variance_time_factor;
   forbidden_radius_time_factor_ = config.forbidden_radius_time_factor;
 
-
-  special_mob_id_amplitude_ = config.special_mob_id_amplitude;
-
   int interpolation_steps = config.interpolation_steps;
   interpolation_time_step_ = ros::Duration(time_resolution_.toSec() / (interpolation_steps + 1));
 
-   //visualize the new configuration
+  //visualize the new configuration
   if (timed_costmap_.size() > 0)
   {
     lattice_planner::TimedCostmap* timed_costmap =
@@ -343,7 +336,7 @@ void SocialLayers::reconfigureCB(dynamic_social_costmap::SocialCostmapConfig &co
     {
       //mark the resulting cost function at different positions inside the cost map
       markHumanInCostmap(timed_costmap->size_x / 8 + (i * 1.0 / timed_costmap->resolution),
-                         timed_costmap->size_y / 2, M_PI_4, timed_costmap, person_k);
+                         timed_costmap->size_y / 2, M_PI_4, timed_costmap);
     }
 
     //publish the marked costmap for visualization
@@ -358,7 +351,6 @@ void SocialLayers::peopleCallback(const people_msgs::PeoplePredictionConstPtr pe
 {
   ROS_DEBUG("dynamic costmap: received people callback");
   predicted_people_ = *people;
-
 }
 
 double SocialLayers::calcGaussian(double pos_x, double pos_y, double origin_x,
@@ -422,26 +414,10 @@ bool SocialLayers::getCostmapCoordinates(geometry_msgs::PoseStamped* pose,
 
   return true;
 }
-
+/*
 void SocialLayers::markHumanInCostmap(int human_in_costmap_x, int human_in_costmap_y,
-                                      double angle, lattice_planner::TimedCostmap *costmap,
-                                      const people_msgs::Person& person_k)
+                                      double angle, lattice_planner::TimedCostmap *costmap)
 {
-
-  // Calculate variance based on mob_id (adjust this formula based on the requirements)
-  //double adjusted_variance_x = variance_x_ + 0.9 -(1 / mob_id_);
-  //double adjusted_variance_y = variance_y_ + 0.9 -(1 / mob_id_);
-  //double adjusted_forbidden_radius = forbidden_radius_ * mob_id * special_mob_id_amplitude_;
-
-
-//double adjusted_variance_x = special_mob_id_amplitude_ * mob_id_;
-//double adjusted_variance_y = special_mob_id_amplitude_ * mob_id_;
-
-  double adjusted_variance_x = special_mob_id_amplitude_ * person_k.mob_id;
-  double adjusted_variance_y = special_mob_id_amplitude_ * person_k.mob_id;
-
-
-  
   //calculate the Gaussian params for the time index of the cost map layer
   double amplitude =
       (1 + costmap->time_index * amplitude_time_factor_) * amplitude_;
@@ -461,7 +437,6 @@ void SocialLayers::markHumanInCostmap(int human_in_costmap_x, int human_in_costm
   variance_x = variance_x > 0.0 ? variance_x : 0.0;
   variance_y = variance_y > 0.0 ? variance_y : 0.0;
   lethal_radius = lethal_radius > 0.0 ? lethal_radius : 0.0;
-
 
   //calculate gaussian around human
   if(amplitude > 0)
@@ -509,18 +484,10 @@ void SocialLayers::markHumanInCostmap(int human_in_costmap_x, int human_in_costm
         //calculate Gaussian value of cell
         else
         {
-          /*double gauss_ampl = calcGaussian(i*resolution, j*resolution,
+          double gauss_ampl = calcGaussian(i*resolution, j*resolution,
                                            origin_ix*resolution,
                                            origin_iy*resolution,
                                            amplitude, variance_x, variance_y, angle);
-*/
-
-                                             // calculate Gaussian around human using adjusted variances
-          double gauss_ampl = calcGaussian(i * resolution, j * resolution,
-                                   origin_ix * resolution,
-                                   origin_iy * resolution,
-                                   amplitude, adjusted_variance_x, adjusted_variance_y, angle);
-
 
           cost = (unsigned char) gauss_ampl;
 
@@ -538,5 +505,191 @@ void SocialLayers::markHumanInCostmap(int human_in_costmap_x, int human_in_costm
     }
   }
 }
+*/
 
-} //namespace dynamic_costmap
+void SocialLayers::markHumanInCostmap(int human_in_costmap_x, int human_in_costmap_y,
+                                      double angle, lattice_planner::TimedCostmap *costmap)
+{
+  // calculate the Gaussian params for the time index of the cost map layer
+  double amplitude =
+      (1 + costmap->time_index * amplitude_time_factor_) * amplitude_;
+  double cutoff_amplitude =
+      (1 - costmap->time_index * variance_time_factor_) * cutoff_amplitude_;
+  double variance_x =
+      (1 + costmap->time_index * variance_time_factor_) * variance_x_;
+  double variance_y =
+      (1 + costmap->time_index * variance_time_factor_) * variance_y_;
+  double lethal_radius =
+      (1 + costmap->time_index * forbidden_radius_time_factor_) * forbidden_radius_;
+
+  // clamp the values
+  amplitude = amplitude > 0.0 ? amplitude : 0.0;
+  amplitude = amplitude < (double) costmap_2d::LETHAL_OBSTACLE ? amplitude : (double) costmap_2d::LETHAL_OBSTACLE;
+  cutoff_amplitude = cutoff_amplitude > 0.0 ? cutoff_amplitude : 0.0;
+  variance_x = variance_x > 0.0 ? variance_x : 0.0;
+  variance_y = variance_y > 0.0 ? variance_y : 0.0;
+  lethal_radius = lethal_radius > 0.0 ? lethal_radius : 0.0;
+
+  // calculate Gaussian around person
+ if (amplitude > 0)
+  {
+  
+ 
+    double resolution = static_map_->getCostmap()->getResolution();
+
+    // calculate radius around person1 for cutoff amplitude
+    double cutoff_radius = std::max(calcCutoffRadius(cutoff_amplitude,
+                                                     amplitude, variance_x),
+                                    calcCutoffRadius(cutoff_amplitude,
+                                                     amplitude, variance_y));
+
+    // calculate corresponding number of grid cells
+    int cutoff_radius_grid = (int)std::min((cutoff_radius / resolution),
+                                           (double)std::max(costmap->size_y,
+                                                            costmap->size_x));
+
+    // calculate the origin of the gaussian
+    int origin_ix = (human_in_costmap_x + offset_x_ / resolution * cos(angle)
+                     + offset_y_ / resolution * -sin(angle));
+    int origin_iy = (human_in_costmap_y + offset_x_ / resolution * sin(angle)
+                     + offset_y_ / resolution * cos(angle));
+
+    // iterate through relevant grid cells and calculate the amplitude of the
+    // gaussian for every cell. Mind costmap constraints
+    int x_map_min = std::max(0, origin_ix - cutoff_radius_grid);
+    int x_map_max = std::min(costmap->size_x, origin_ix +
+                                           cutoff_radius_grid);
+    int y_map_min = std::max(0, origin_iy - cutoff_radius_grid);
+    int y_map_max = std::min(costmap->size_y, origin_iy +
+                                           cutoff_radius_grid);
+
+    for (unsigned int i = x_map_min; i < x_map_max; i++)
+    {
+      for (unsigned int j = y_map_min; j < y_map_max; j++)
+      {
+        unsigned char cost;
+
+        // check if the cell is inside the lethal radius around person1
+        if ((hypot(i * resolution - human_in_costmap_x * resolution,
+                   j * resolution - human_in_costmap_y * resolution)) < lethal_radius)
+          // assign lethal cost
+          cost = costmap_2d::LETHAL_OBSTACLE;
+
+        // calculate Gaussian value of cell
+        else
+        {
+          double gauss_ampl = calcGaussian(i * resolution, j * resolution,
+                                           origin_ix * resolution,
+                                           origin_iy * resolution,
+                                           amplitude, variance_x, variance_y, angle);
+
+          cost = (unsigned char)gauss_ampl;
+
+          // if the value is outside the cutoff value, set to zero
+          if (gauss_ampl < cutoff_amplitude)
+            cost = 0;
+
+          // if the cost is larger than the lethal obstacle radius, clamp it
+          else if (cost > costmap_2d::LETHAL_OBSTACLE)
+            cost = costmap_2d::LETHAL_OBSTACLE;
+        }
+
+        costmap->setCost(i, j, std::max(cost, costmap->getCost(i, j)));
+      }
+    }
+    
+    } 
+    
+  double amplitude2 = 1.3*amplitude;  // Adjust the amplitude for the second Gaussian
+  double variance_x2 = 1.5 * variance_x;  // Adjust the variance for the second Gaussian
+  double variance_y2 = 1.5 * variance_y;  // Adjust the variance for the second Gaussian
+  
+   // Add another Gaussian around person2
+  double amplitude3 = 1 * amplitude;  // Adjust the amplitude for the second Gaussian
+  double variance_x3 = 1 * variance_x;  // Adjust the variance for the second Gaussian
+  double variance_y3 = 1 * variance_y;  // Adjust the variance for the second Gaussian
+
+  if (amplitude > 0)
+  {
+    double resolution = static_map_->getCostmap()->getResolution();
+
+    // calculate radius around person1 for cutoff amplitude
+    double cutoff_radius = std::max(calcCutoffRadius(cutoff_amplitude,
+                                                     amplitude2, variance_x),
+                                    calcCutoffRadius(cutoff_amplitude,
+                                                     amplitude2, variance_y));
+
+    // calculate corresponding number of grid cells
+    int cutoff_radius_grid = (int)std::min((cutoff_radius / resolution),
+                                           (double)std::max(costmap->size_y,
+                                                            costmap->size_x));
+
+    // calculate the origin of the gaussian
+    int origin_ix = (human_in_costmap_x + offset_x_ / resolution * cos(angle)
+                     + offset_y_ / resolution * -sin(angle));
+    int origin_iy = (human_in_costmap_y + offset_x_ / resolution * sin(angle)
+                     + offset_y_ / resolution * cos(angle));
+
+    // iterate through relevant grid cells and calculate the amplitude of the
+    // gaussian for every cell. Mind costmap constraints
+    int x_map_min = std::max(0, origin_ix - cutoff_radius_grid);
+    int x_map_max = std::min(costmap->size_x, origin_ix +
+                                           cutoff_radius_grid);
+    int y_map_min = std::max(0, origin_iy - cutoff_radius_grid);
+    int y_map_max = std::min(costmap->size_y, origin_iy +
+                                           cutoff_radius_grid);
+
+    for (unsigned int i = x_map_min; i < x_map_max; i++)
+    {
+      for (unsigned int j = y_map_min; j < y_map_max; j++)
+      {
+        unsigned char cost;
+// check if the cell is inside the lethal radius around person1
+if ((hypot(i * resolution - human_in_costmap_x * resolution,
+           j * resolution - human_in_costmap_y * resolution)) < lethal_radius) {
+  // assign lethal cost
+  cost = costmap_2d::LETHAL_OBSTACLE;
+} else {
+  // check if the Gaussian should be applied to person1
+  if (personName_.compare("person1") == 0) {
+    double gauss_ampl = calcGaussian(i * resolution, j * resolution,
+                                     origin_ix * resolution,
+                                     origin_iy * resolution,
+                                     amplitude2, variance_x2, variance_y2, angle);
+
+    cost = (unsigned char)gauss_ampl;
+
+    // if the value is outside the cutoff value, set to zero
+    if (gauss_ampl < cutoff_amplitude)
+      cost = 0;
+
+    // if the cost is larger than the lethal obstacle radius, clamp it
+    else if (cost > costmap_2d::LETHAL_OBSTACLE)
+      cost = costmap_2d::LETHAL_OBSTACLE;
+  }
+  // check if the Gaussian should be applied to person2
+  else if (personName_.compare("person2") == 0) {
+    double gauss_ampl = calcGaussian(i * resolution, j * resolution,
+                                     origin_ix * resolution,
+                                     origin_iy * resolution,
+                                     amplitude3, variance_x3, variance_y3, angle);
+
+    cost = (unsigned char)gauss_ampl;
+
+    // if the value is outside the cutoff value, set to zero
+    if (gauss_ampl < cutoff_amplitude)
+      cost = 0;
+
+    // if the cost is larger than the lethal obstacle radius, clamp it
+    else if (cost > costmap_2d::LETHAL_OBSTACLE)
+      cost = costmap_2d::LETHAL_OBSTACLE;
+  }
+}
+        costmap->setCost(i, j, std::max(cost, costmap->getCost(i, j)));
+      }
+    }
+  }
+}
+}
+
+ //namespace dynamic_costmap
