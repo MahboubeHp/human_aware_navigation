@@ -39,4 +39,12 @@ $sudo apt-get install ros-noetic-kobuki-msgs
 and after that 
 ```
 $catkin_make
+$source devel/setup.bash
 ```
+If you wish to test the Human aware navigation with Turtlebot3 consider installing it 
+```
+sudo apt-get update
+sudo apt-get install ros-noetic-turtlebot3 ros-noetic-turtlebot3-simulations
+
+```
+Otherwise consider bringing up your fancy robot and test it.
