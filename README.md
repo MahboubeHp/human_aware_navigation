@@ -30,13 +30,13 @@ $git clone -b noetic https://github.com/MahboubeHp/wu_ros_tools.git
 
 Then install these dependencies:
 ```
-sudo apt install ros-noetic-costmap-2d -y
-sudo apt install liborocos-bfl-dev
-sudo apt-get install ros-noetic-nav-core
-sudo apt-get install ros-noetic-navfn
-sudo apt-get install ros-noetic-kobuki-msgs
+$sudo apt install ros-noetic-costmap-2d -y
+$sudo apt install liborocos-bfl-dev
+$sudo apt-get install ros-noetic-nav-core
+$sudo apt-get install ros-noetic-navfn
+$sudo apt-get install ros-noetic-kobuki-msgs
 ```
 and after that 
 ```
-catkin_make
+$catkin_make
 ```
