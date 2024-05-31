@@ -1,4 +1,8 @@
 <launch>
+
+  <!-- Shut down the turtlebot3_drive node if it is running to prevent hazardous moving -->
+  <node name="kill_turtlebot3_drive" pkg="rosnode" type="rosnode" args="kill turtlebot3_drive" />
+
   <!-- Map file path -->
   <arg name="map_file" default="$(find human_aware_nav_launch)/maps/playground_new.yaml"/>
 
