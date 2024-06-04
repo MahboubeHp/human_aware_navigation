@@ -50,5 +50,9 @@ sudo apt-get install ros-noetic-turtlebot3 ros-noetic-turtlebot3-simulations
 Otherwise consider bringing up your fancy robot and test it. Please refer to the Human aware navigation wiki by Marina Kollmitz for the information on how to controll the robot using move_base.
 
 You might notice that the Turtlebot3 moves randomly by itself. looking into the topics, you can notice that the Turtlebot3_drive node in addition to the move_base is publishing into /cmd_vel. killing this node directly will stop gazebo.
-A solution to fix this issue is killing this node is to navigate to ../turtlebot3_gazebo/launch/turtlebot3_simulation.launch and then, Commented out the turtlebot3_drive node to prevent it from starting as the lines below:
+
+A solution to fix this issue is killing this node is to navigate to the turtlebot3_gazebo package like: 
+
+../turtlebot3_gazebo/launch/turtlebot3_simulation.launch and then, Commented out the turtlebot3_drive node to prevent it from starting as the lines below:
+
   <!-- <node name="$(arg name)_drive" pkg="turtlebot3_gazebo" type="turtlebot3_drive" required="true" output="screen"/> -->
