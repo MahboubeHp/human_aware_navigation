@@ -28,7 +28,7 @@ $git clone -b noetic-devel https://github.com/MahboubeHp/timed_path_follower.git
 $git clone -b noetic https://github.com/MahboubeHp/wu_ros_tools.git
 ```
 
-Then install these dependencies:
+Then install the dependencies below, you may need to install some of them locally within your catkin_ws:
 ```
 $sudo apt install ros-noetic-costmap-2d -y
 $sudo apt install liborocos-bfl-dev
