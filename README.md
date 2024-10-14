@@ -51,8 +51,9 @@ Otherwise consider bringing up your fancy robot and test it. Please refer to the
 
 You might notice that the Turtlebot3 moves randomly by itself. looking into the topics, you can notice that the Turtlebot3_drive node in addition to the move_base is publishing into /cmd_vel. killing this node directly will stop gazebo.
 
-A solution to fix this issue is killing this node is to navigate to the turtlebot3_gazebo package like: 
+A solution to fix this issue is to navigate to the turtlebot3_gazebo package which might be located in: 
 
-../turtlebot3_gazebo/launch/turtlebot3_simulation.launch and then, Commented out the turtlebot3_drive node to prevent it from starting as the lines below:
+../turtlebot3_gazebo/launch/turtlebot3_simulation.launch 
+then, Commenting out the turtlebot3_drive node to prevent it from starting. Commenting out the line below:
 
-  <!-- <node name="$(arg name)_drive" pkg="turtlebot3_gazebo" type="turtlebot3_drive" required="true" output="screen"/> -->
+<node name="$(arg name)_drive" pkg="turtlebot3_gazebo" type="turtlebot3_drive" required="true" output="screen"/> 
