@@ -3,9 +3,7 @@ This repository contains ROS packages designed to enable navigation path plannin
 
 If you use this code in your research, please consider citing the original paper by Kollmitz et al.
 
-
 # Here is the installation steps for the noetic devel :
-
 cd ~/catkin_ws/src
 
 Clone the following packages from GitHub:
@@ -26,7 +24,6 @@ $sudo apt-get install ros-noetic-nav-core
 $sudo apt-get install ros-noetic-navfn
 $sudo apt-get install ros-noetic-kobuki-msgs
 ```
-and after that 
 ```
 $catkin_make
 $source devel/setup.bash
