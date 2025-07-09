@@ -1,18 +1,8 @@
 # human_aware_navigation
-The human_aware_navigation repository includes ROS packages to enable the planning of navigation paths that take human comfort into account 
+This repository contains ROS packages designed to enable navigation path planning that accounts for human comfort. In this forked version, I have resolved dependency issues and updated the lab configurations to ensure compatibility with ROS Noetic (version 22.01).
 
-If you use the code for your research, please consider citing the paper:
+If you use this code in your research, please consider citing the original paper by Kollmitz et al.
 
-```
-@INPROCEEDINGS{kollmitz15ecmr,
-  author = {Marina Kollmitz and Kaijen Hsiao and Johannes Gaa and Wolfram Burgard},
-  title = {Time Dependent Planning on a Layered Social Cost Map for Human-Aware Robot Navigation},
-  booktitle = {Proc.~of the IEEE Eur.~Conf.~on Mobile Robotics (ECMR)},
-  year = {2015},
-  doi = {10.1109/ECMR.2015.7324184},
-  url = {http://ais.informatik.uni-freiburg.de/publications/papers/kollmitz15ecmr.pdf}
-}
-```
 
 # Here is the installation steps for the noetic devel :
 
@@ -49,9 +39,9 @@ sudo apt-get install ros-noetic-turtlebot3 ros-noetic-turtlebot3-simulations
 ```
 Otherwise consider bringing up your desired robot and test it. Please refer to the Human aware navigation wiki by Marina Kollmitz for the information on how to controll the robot using move_base.
 
-You might notice that the Turtlebot3 moves randomly by itself. looking into the topics, you can notice that the Turtlebot3_drive node in addition to the move_base is publishing into /cmd_vel. killing this node directly will stop gazebo.
+You might notice that the Turtlebot3 moves randomly by itself. looking into the topics, you can observe that the Turtlebot3_drive node in addition to the move_base is publishing into /cmd_vel. killing this node directly will stop gazebo.
 
-A solution to fix this issue is to navigate to the turtlebot3_gazebo package which might be located in: 
+A solution to fix this issue is to navigate to the turtlebot3_gazebo package which can be located in: 
 
 ../turtlebot3_gazebo/launch/turtlebot3_simulation.launch 
 then, Commenting out the turtlebot3_drive node to prevent it from starting. Commenting out the line below:
