@@ -44,6 +44,5 @@ You might notice that the Turtlebot3 moves randomly by itself. looking into the 
 A solution to fix this issue is to navigate to the turtlebot3_gazebo package which can be located in: 
 
 ../turtlebot3_gazebo/launch/turtlebot3_simulation.launch 
-then, Commenting out the turtlebot3_drive node to prevent it from starting. Commenting out the line below:
-
+then, Commenting out the turtlebot3_drive node to prevent it from starting. You can comment out the line below to fix the behaviour:
 <node name="$(arg name)_drive" pkg="turtlebot3_gazebo" type="turtlebot3_drive" required="true" output="screen"/> 
